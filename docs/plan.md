@@ -111,7 +111,7 @@ Status: complete for OAuth-file path
 
 ### Phase 5
 
-Status: next
+Status: in progress
 
 - Add packaging and autostart support for Fedora/KDE
 - Improve tray compactness and notifications
@@ -119,7 +119,7 @@ Status: next
 
 ## Next work
 
-1. Add Fedora/KDE packaging and autostart support.
+1. Finish Fedora/KDE packaging polish beyond the current autostart support.
 2. Add optional OpenCode browser-cookie import for Linux browsers.
 3. Decide whether Codex dashboard extras belong in the next milestone.
 4. Improve validation and diagnostics around expired credentials and malformed config.

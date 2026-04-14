@@ -59,6 +59,7 @@ What you should expect:
 5. Use `Reload config`.
 6. Use `Refresh now`.
 7. Verify that the provider lines in the tray menu update.
+8. Optionally use `Install autostart` to create a KDE-compatible autostart entry.
 
 During dev, Tauri may also start a frontend dev server on a localhost port, but that is backing the app runtime. The main thing you verify is the tray behavior, not a browser page.
 
@@ -67,6 +68,15 @@ During dev, Tauri may also start a frontend dev server on a localhost port, but 
 The app creates `~/.config/linux-codexbar/config.json` on first run.
 
 OpenCode currently expects a manual cookie header in that file. Codex and Claude read their existing local auth files directly.
+
+## Autostart
+
+The tray menu includes:
+
+- `Install autostart`
+- `Remove autostart`
+
+That writes or removes `~/.config/autostart/linux-codexbar.desktop`, which is the simplest Fedora KDE Plasma path for session startup.
 
 ## Notes
 

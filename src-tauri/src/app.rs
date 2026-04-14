@@ -2,9 +2,11 @@ use crate::config;
 use crate::models::{AppConfig, ProviderSnapshot, ProviderState, UsageWindowSnapshot};
 use crate::providers::{claude, codex, opencode};
 use chrono::{DateTime, Local};
+use std::fs;
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::path::PathBuf;
 use std::time::Duration;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
@@ -165,6 +167,8 @@ fn build_tray(app: &tauri::App<Wry>) -> tauri::Result<TrayHandles> {
     let reload_config = MenuItem::with_id(app, "reload-config", "Reload config", true, None::<&str>)?;
     let open_config = MenuItem::with_id(app, "open-config", "Open config.json", true, None::<&str>)?;
     let open_config_dir = MenuItem::with_id(app, "open-config-dir", "Open config directory", true, None::<&str>)?;
+    let install_autostart_item = MenuItem::with_id(app, "install-autostart", "Install autostart", true, None::<&str>)?;
+    let remove_autostart_item = MenuItem::with_id(app, "remove-autostart", "Remove autostart", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
     let separator_a = PredefinedMenuItem::separator(app)?;
@@ -197,6 +201,8 @@ fn build_tray(app: &tauri::App<Wry>) -> tauri::Result<TrayHandles> {
             &reload_config,
             &open_config,
             &open_config_dir,
+            &install_autostart_item,
+            &remove_autostart_item,
             &quit,
         ],
     )?;
@@ -215,6 +221,8 @@ fn build_tray(app: &tauri::App<Wry>) -> tauri::Result<TrayHandles> {
                 "reload-config" => runtime.reload_config(),
                 "open-config" => open_path(config::config_file_path().ok()),
                 "open-config-dir" => open_path(config::config_dir_path().ok()),
+                "install-autostart" => runtime.set_config_hint(&install_autostart_entry().unwrap_or_else(|e| format!("Autostart install failed: {e}"))),
+                "remove-autostart" => runtime.set_config_hint(&remove_autostart_entry().unwrap_or_else(|e| format!("Autostart removal failed: {e}"))),
                 "quit" => app.exit(0),
                 _ => {}
             }
@@ -345,4 +353,37 @@ fn shorten(value: &str, max_len: usize) -> String {
 fn open_path(path: Option<std::path::PathBuf>) {
     let Some(path) = path else { return };
     let _ = Command::new("xdg-open").arg(path).spawn();
+}
+
+fn install_autostart_entry() -> Result<String, String> {
+    let path = autostart_desktop_entry_path()?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("Failed creating autostart directory {}: {error}", parent.display()))?;
+    }
+    let current_exe = std::env::current_exe()
+        .map_err(|error| format!("Failed resolving current executable: {error}"))?;
+    let desktop_entry = format!(
+        "[Desktop Entry]\nType=Application\nName=Linux CodexBar\nComment=Tray app for OpenCode, Codex, and Claude usage windows\nExec={}\nTerminal=false\nX-GNOME-Autostart-enabled=true\nCategories=Utility;Development;\n",
+        current_exe.display()
+    );
+    fs::write(&path, desktop_entry)
+        .map_err(|error| format!("Failed writing autostart entry {}: {error}", path.display()))?;
+    Ok(format!("Autostart installed at {}", path.display()))
+}
+
+fn remove_autostart_entry() -> Result<String, String> {
+    let path = autostart_desktop_entry_path()?;
+    if path.exists() {
+        fs::remove_file(&path)
+            .map_err(|error| format!("Failed removing autostart entry {}: {error}", path.display()))?;
+        Ok("Autostart removed".to_string())
+    } else {
+        Ok("Autostart entry was not installed".to_string())
+    }
+}
+
+fn autostart_desktop_entry_path() -> Result<PathBuf, String> {
+    let base = dirs::config_dir().ok_or_else(|| "Could not resolve ~/.config".to_string())?;
+    Ok(base.join("autostart").join("linux-codexbar.desktop"))
 }
