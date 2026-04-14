@@ -32,9 +32,14 @@ The upstream `steipete/CodexBar` project has a strong shared fetch/parsing archi
 Install the Tauri Linux dependencies first:
 
 ```bash
-sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file libappindicator-gtk3-devel librsvg2-devel libxdo-devel
+sudo dnf install webkit2gtk4.1-devel gtk3-devel cairo-gobject-devel openssl-devel curl wget file libappindicator-gtk3-devel librsvg2-devel libxdo-devel
 sudo dnf group install "c-development"
 ```
+
+If `npm run tauri dev` still complains about `gdk-3.0` or `cairo-gobject`, those are the Fedora packages that provide them:
+
+- `gtk3-devel` provides `pkgconfig(gdk-3.0)`
+- `cairo-gobject-devel` provides `pkgconfig(cairo-gobject)`
 
 ## Run the app
 
